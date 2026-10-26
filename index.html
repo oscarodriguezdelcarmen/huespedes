@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Viajeros - Alojamiento</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 750px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
+        fieldset { border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin-bottom: 20px; background-color: #fafbfc; }
+        legend { font-weight: bold; color: #34495e; padding: 0 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; box-sizing: border-box; background-color: #fff; }
+        input:focus, select:focus { border-color: #3498db; outline: none; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
+        .error-msg { color: #e74c3c; font-size: 12px; margin-top: 4px; display: none; }
+        button { background-color: #27ae60; color: white; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; transition: background 0.3s; margin-top: 10px; }
+        button:hover { background-color: #219653; }
+        .row { display: flex; gap: 15px; }
+        .row .form-group { flex: 1; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+        .checkbox-group input { width: auto; }
+        .success-msg { background: #d4edda; color: #155724; padding: 20px; border-radius: 5px; text-align: center; font-weight: bold; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Registro de Huéspedes (Parte de Viajeros)</h2>
+    
+    <div id="successMessage" class="success-msg">
+        ¡Datos enviados y registrados correctamente! Muchas gracias. Ya puedes cerrar esta ventana.
+    </div>
+
+    <form id="formularioViajero" onsubmit="enviarDatos(event)">
+        
+        <!-- Datos Personales -->
+        <fieldset>
+            <legend>Datos Personales</legend>
+            <div class="row">
+                <div class="form-group">
+                    <label for="nombre">Nombre *</label>
+                    <input type="text" id="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="apellido1">Primer Apellido *</label>
+                    <input type="text" id="apellido1" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label for="apellido2">Segundo Apellido</label>
+                    <input type="text" id="apellido2">
+                </div>
+                <div class="form-group">
+                    <label for="sexo">Sexo *</label>
+                    <select id="sexo" required>
+                        <option value="H">Hombre</option>
+                        <option value="M">Mujer</option>
+                        <option value="O">Otro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="fechaNacimiento">Fecha de Nacimiento *</label>
+                <input type="date" id="fechaNacimiento" required>
+            </div>
+        </fieldset>
+
+        <!-- Documentación -->
+        <fieldset>
+            <legend>Documento de Identidad</legend>
+            <div class="row">
+                <div class="form-group">
+                    <label for="tipoDocumento">Tipo de Documento *</label>
+                    <select id="tipoDocumento" required>
+                        <option value="NIF">NIF / DNI</option>
+                        <option value="NIE">NIE</option>
+                        <option value="PAS">Pasaporte</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="numeroDocumento">Número de Documento *</label>
+                    <input type="text" id="numeroDocumento" placeholder="Ej: 12345678Z" required oninput="this.value = this.value.toUpperCase()">
+                    <div id="errorDoc" class="error-msg">El número o la letra de control del documento no es válida.</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label for="nacionalidad">Nacionalidad *</label>
+                    <select id="nacionalidad" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="soporteDocumento">Número de Soporte (Opcional)</label>
+                    <input type="text" id="soporteDocumento" placeholder="Soporte si aplica">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Dirección -->
+        <fieldset>
+            <legend>Dirección de Residencia</legend>
+            <div class="form-group">
+                <label for="direccion">Dirección (Calle, número, piso) *</label>
+                <input type="text" id="direccion" required>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label for="paisResidencia">País de Residencia *</label>
+                    <select id="paisResidencia" required onchange="controlarPaisResidencia()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="codigoPostal">Código Postal *</label>
+                    <input type="text" id="codigoPostal" required placeholder="Ej: 36400">
+                    <div id="errorCP" class="error-msg">Para España, el código postal debe tener exactamente 5 dígitos numéricos.</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group" id="divCodigoMun">
+                    <label for="codigoMunicipio">Código de Municipio (5 dígitos - España) *</label>
+                    <input type="text" id="codigoMunicipio" placeholder="Ej: 36039 (Porriño)" required>
+                    <div id="errorMun" class="error-msg">El código de municipio en España debe tener 5 dígitos.</div>
+                </div>
+                <div class="form-group" id="divNombreMun" style="display:none;">
+                    <label for="nombreMunicipio">Nombre de Municipio (Extranjero) *</label>
+                    <input type="text" id="nombreMunicipio" placeholder="Ej: París">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Contacto y Pago -->
+        <fieldset>
+            <legend>Contacto y Datos de Pago</legend>
+            <div class="row">
+                <div class="form-group">
+                    <label for="telefono">Teléfono *</label>
+                    <input type="tel" id="telefono" required placeholder="+34600000000">
+                </div>
+                <div class="form-group">
+                    <label for="correo">Correo Electrónico *</label>
+                    <input type="email" id="correo" required placeholder="correo@ejemplo.com">
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label for="tipoPago">Tipo de Pago *</label>
+                    <select id="tipoPago">
+                        <option value="EFECT">Efectivo</option>
+                        <option value="TARJT">Tarjeta</option>
+                        <option value="TRANS">Transferencia</option>
+                        <option value="MOVIL">Móvil (Bizum/ApplePay)</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Privacidad -->
+        <div class="checkbox-group">
+            <input type="checkbox" id="politica" required>
+            <label for="politica" style="font-weight: normal; font-size: 13px;">He leído y acepto la política de privacidad y el tratamiento de mis datos para el parte de viajeros de la normativa vigente. *</label>
+        </div>
+
+        <button type="submit" id="btnEnviar">Enviar Datos de Registro</button>
+    </form>
+</div>
+
+<script>
+    // URL DE GOOGLE APPS SCRIPT CONECTADO AL EXCEL DE DRIVE
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzW_R4E9fn_DBjRYguWP8X9vH4CEHJNj2oqFWkbewmfEHVvh-i25Tl_kfwVBF7Itmn6g/exec";
+
+    // LISTADO COMPLETO MUNDIAL DE PAÍSES
+    const PAISES_MUNDO = [
+        {nombre: "Afganistán", code: "AFG"},
+        {nombre: "Albania", code: "ALB"},
+        {nombre: "Alemania", code: "DEU"},
+        {nombre: "Andorra", code: "AND"},
+        {nombre: "Angola", code: "AGO"},
+        {nombre: "Anguila", code: "AIA"},
+        {nombre: "Antártida", code: "ATA"},
+        {nombre: "Antigua y Barbuda", code: "ATG"},
+        {nombre: "Arabia Saudita", code: "SAU"},
+        {nombre: "Argelia", code: "DZA"},
+        {nombre: "Argentina", code: "ARG"},
+        {nombre: "Armenia", code: "ARM"},
+        {nombre: "Aruba", code: "ABW"},
+        {nombre: "Australia", code: "AUS"},
+        {nombre: "Austria", code: "AUT"},
+        {nombre: "Azerbaiyán", code: "AZE"},
+        {nombre: "Bahamas", code: "BHS"},
+        {nombre: "Bangladés", code: "BGD"},
+        {nombre: "Barbados", code: "BRB"},
+        {nombre: "Baréin", code: "BHR"},
+        {nombre: "Bélgica", code: "BEL"},
+        {nombre: "Belice", code: "BLZ"},
+        {nombre: "Benín", code: "BEN"},
+        {nombre: "Bermudas", code: "BMU"},
+        {nombre: "Bielorrusia", code: "BLR"},
+        {nombre: "Birmania / Myanmar", code: "MMR"},
+        {nombre: "Bolivia", code: "BOL"},
+        {nombre: "Bosnia y Herzegovina", code: "BIH"},
+        {nombre: "Botsuana", code: "BWA"},
+        {nombre: "Brasil", code: "BRA"},
+        {nombre: "Brunéi", code: "BRN"},
+        {nombre: "Bulgaria", code: "BGR"},
+        {nombre: "Burkina Faso", code: "BFA"},
+        {nombre: "Burundi", code: "BDI"},
+        {nombre: "Bután", code: "BTN"},
+        {nombre: "Cabo Verde", code: "CPV"},
+        {nombre: "Camboya", code: "KHM"},
+        {nombre: "Camerún", code: "CMR"},
+        {nombre: "Canadá", code: "CAN"},
+        {nombre: "Catar", code: "QAT"},
+        {nombre: "Chad", code: "TCD"},
+        {nombre: "Chile", code: "CHL"},
+        {nombre: "China", code: "CHN"},
+        {nombre: "Chipre", code: "CYP"},
+        {nombre: "Colombia", code: "COL"},
+        {nombre: "Comoras", code: "COM"},
+        {nombre: "Congo", code: "COG"},
+        {nombre: "Congo (Rep. Dem.)", code: "COD"},
+        {nombre: "Corea del Norte", code: "PRK"},
+        {nombre: "Corea del Sur", code: "KOR"},
+        {nombre: "Costa de Marfil", code: "CIV"},
+        {nombre: "Costa Rica", code: "CRI"},
+        {nombre: "Croacia", code: "HRV"},
+        {nombre: "Cuba", code: "CUB"},
+        {nombre: "Curazao", code: "CUW"},
+        {nombre: "Dinamarca", code: "DNK"},
+        {nombre: "Dominica", code: "DMA"},
+        {nombre: "Ecuador", code: "ECU"},
+        {nombre: "Egipto", code: "EGY"},
+        {nombre: "El Salvador", code: "SLV"},
+        {nombre: "Emiratos Árabes Unidos", code: "ARE"},
+        {nombre: "Eritrea", code: "ERI"},
+        {nombre: "Eslovaquia", code: "SVK"},
+        {nombre: "Eslovenia", code: "SVN"},
+        {nombre: "España", code: "ESP"},
+        {nombre: "Estados Unidos", code: "USA"},
+        {nombre: "Estonia", code: "EST"},
+        {nombre: "Etiopía", code: "ETH"},
+        {nombre: "Filipinas", code: "PHL"},
+        {nombre: "Finlandia", code: "FIN"},
+        {nombre: "Fiyi", code: "FJI"},
+        {nombre: "Francia", code: "FRA"},
+        {nombre: "Gabón", code: "GAB"},
+        {nombre: "Gambia", code: "GMB"},
+        {nombre: "Georgia", code: "GEO"},
+        {nombre: "Ghana", code: "GHA"},
+        {nombre: "Gibraltar", code: "GIB"},
+        {nombre: "Granada", code: "GRD"},
+        {nombre: "Grecia", code: "GRC"},
+        {nombre: "Groenlandia", code: "GRL"},
+        {nombre: "Guadalupe", code: "GLP"},
+        {nombre: "Guam", code: "GUM"},
+        {nombre: "Guatemala", code: "GTM"},
+        {nombre: "Guayana Francesa", code: "GUF"},
+        {nombre: "Guernsey", code: "GGY"},
+        {nombre: "Guinea", code: "GIN"},
+        {nombre: "Guinea Ecuatorial", code: "GNQ"},
+        {nombre: "Guinea-Bissau", code: "GNB"},
+        {nombre: "Guyana", code: "GUY"},
+        {nombre: "Haití", code: "HTI"},
+        {nombre: "Honduras", code: "HND"},
+        {nombre: "Hong Kong", code: "HKG"},
+        {nombre: "Hungría", code: "HUN"},
+        {nombre: "India", code: "IND"},
+        {nombre: "Indonesia", code: "IDN"},
+        {nombre: "Irak", code: "IRQ"},
+        {nombre: "Irán", code: "IRN"},
+        {nombre: "Irlanda", code: "IRL"},
+        {nombre: "Isla Bouvet", code: "BVT"},
+        {nombre: "Isla de Man", code: "IMN"},
+        {nombre: "Isla de Navidad", code: "CXR"},
+        {nombre: "Isla Norfolk", code: "NFK"},
+        {nombre: "Islandia", code: "ISL"},
+        {nombre: "Islas Åland", code: "ALA"},
+        {nombre: "Islas Caimán", code: "CYM"},
+        {nombre: "Islas Cocos", code: "CCK"},
+        {nombre: "Islas Cook", code: "COK"},
+        {nombre: "Islas Feroe", code: "FRO"},
+        {nombre: "Islas Georgias del Sur y Sandwich del Sur", code: "SGS"},
+        {nombre: "Islas Heard y McDonald", code: "HMD"},
+        {nombre: "Islas Malvinas", code: "FLK"},
+        {nombre: "Islas Marianas del Norte", code: "MNP"},
+        {nombre: "Islas Marshall", code: "MHL"},
+        {nombre: "Islas Pitcairn", code: "PCN"},
+        {nombre: "Islas Salomón", code: "SLB"},
+        {nombre: "Islas Turcas y Caicos", code: "TCA"},
+        {nombre: "Islas Vírgenes Británicas", code: "VGB"},
+        {nombre: "Islas Vírgenes de los Estados Unidos", code: "VIR"},
+        {nombre: "Israel", code: "ISR"},
+        {nombre: "Italia", code: "ITA"},
+        {nombre: "Jamaica", code: "JAM"},
+        {nombre: "Japón", code: "JPN"},
+        {nombre: "Jersey", code: "JEY"},
+        {nombre: "Jordania", code: "JOR"},
+        {nombre: "Kazajistán", code: "KAZ"},
+        {nombre: "Kenia", code: "KEN"},
+        {nombre: "Kirguistán", code: "KGZ"},
+        {nombre: "Kiribati", code: "KIR"},
+        {nombre: "Kuwait", code: "KWT"},
+        {nombre: "Laos", code: "LAO"},
+        {nombre: "Lesoto", code: "LSO"},
+        {nombre: "Letonia", code: "LVA"},
+        {nombre: "Líbano", code: "LBN"},
+        {nombre: "Liberia", code: "LBR"},
+        {nombre: "Libia", code: "LBY"},
+        {nombre: "Liechtenstein", code: "LIE"},
+        {nombre: "Lituania", code: "LTU"},
+        {nombre: "Luxemburgo", code: "LUX"},
+        {nombre: "Macao", code: "MAC"},
+        {nombre: "Macedonia del Norte", code: "MKD"},
+        {nombre: "Madagascar", code: "MDG"},
+        {nombre: "Malasia", code: "MYS"},
+        {nombre: "Malaui", code: "MWI"},
+        {nombre: "Maldivas", code: "MDV"},
+        {nombre: "Mali", code: "MLI"},
+        {nombre: "Malta", code: "MLT"},
+        {nombre: "Marruecos", code: "MAR"},
+        {nombre: "Martinica", code: "MTQ"},
+        {nombre: "Mauricio", code: "MUS"},
+        {nombre: "Mauritania", code: "MRT"},
+        {nombre: "Mayotte", code: "MYT"},
+        {nombre: "México", code: "MEX"},
+        {nombre: "Micronesia", code: "FSM"},
+        {nombre: "Moldavia", code: "MDA"},
+        {nombre: "Mónaco", code: "MCO"},
+        {nombre: "Mongolia", code: "MNG"},
+        {nombre: "Montenegro", code: "MNE"},
+        {nombre: "Montserrat", code: "MSR"},
+        {nombre: "Mozambique", code: "MOZ"},
+        {nombre: "Namibia", code: "NAM"},
+        {nombre: "Nauru", code: "NRU"},
+        {nombre: "Nepal", code: "NPL"},
+        {nombre: "Nicaragua", code: "NIC"},
+        {nombre: "Níger", code: "NER"},
+        {nombre: "Nigeria", code: "NGA"},
+        {nombre: "Niue", code: "NIU"},
+        {nombre: "Noruega", code: "NOR"},
+        {nombre: "Nueva Caledonia", code: "NCL"},
+        {nombre: "Nueva Zelanda", code: "NZL"},
+        {nombre: "Omán", code: "OMN"},
+        {nombre: "Países Bajos", code: "NLD"},
+        {nombre: "Pakistán", code: "PAK"},
+        {nombre: "Palaos", code: "PLW"},
+        {nombre: "Palestina", code: "PSE"},
+        {nombre: "Panamá", code: "PAN"},
+        {nombre: "Papúa Nueva Guinea", code: "PNG"},
+        {nombre: "Paraguay", code: "PRY"},
+        {nombre: "Perú", code: "PER"},
+        {nombre: "Polinesia Francesa", code: "PYF"},
+        {nombre: "Polonia", code: "POL"},
+        {nombre: "Portugal", code: "PRT"},
+        {nombre: "Puerto Rico", code: "PRI"},
+        {nombre: "Reino Unido", code: "GBR"},
+        {nombre: "República Centroafricana", code: "CAF"},
+        {nombre: "República Checa", code: "CZE"},
+        {nombre: "República Dominicana", code: "DOM"},
+        {nombre: "Reunión", code: "REU"},
+        {nombre: "Ruanda", code: "RWA"},
+        {nombre: "Rumanía", code: "ROU"},
+        {nombre: "Rusia", code: "RUS"},
+        {nombre: "Sahara Occidental", code: "ESH"},
+        {nombre: "Samoa", code: "WSM"},
+        {nombre: "Samoa Americana", code: "ASM"},
+        {nombre: "San Bartolomé", code: "BLM"},
+        {nombre: "San Cristóbal y Nieves", code: "KNA"},
+        {nombre: "San Marino", code: "SMR"},
+        {nombre: "San Martín (Francia)", code: "MAF"},
+        {nombre: "San Pedro y Miquelón", code: "SPM"},
+        {nombre: "San Vicente y las Granadinas", code: "VCT"},
+        {nombre: "Santa Helena", code: "SHN"},
+        {nombre: "Santa Lucía", code: "LCA"},
+        {nombre: "Santo Tomé y Príncipe", code: "STP"},
+        {nombre: "Senegal", code: "SEN"},
+        {nombre: "Serbia", code: "SRB"},
+        {nombre: "Seychelles", code: "SYC"},
+        {nombre: "Sierra Leona", code: "SLE"},
+        {nombre: "Singapur", code: "SGP"},
+        {nombre: "Sint Maarten", code: "SXM"},
+        {nombre: "Siria", code: "SYR"},
+        {nombre: "Somalia", code: "SOM"},
+        {nombre: "Sri Lanka", code: "LKA"},
+        {nombre: "Suazilandia (Esuatini)", code: "SWZ"},
+        {nombre: "Sudáfrica", code: "ZAF"},
+        {nombre: "Sudán", code: "SDN"},
+        {nombre: "Sudán del Sur", code: "SSD"},
+        {nombre: "Suecia", code: "SWE"},
+        {nombre: "Suiza", code: "CHE"},
+        {nombre: "Surinam", code: "SUR"},
+        {nombre: "Svalbard y Jan Mayen", code: "SJM"},
+        {nombre: "Tailandia", code: "THA"},
+        {nombre: "Taiwán", code: "TWN"},
+        {nombre: "Tanzania", code: "TZA"},
+        {nombre: "Tayikistán", code: "TJK"},
+        {nombre: "Territorio Británico del Océano Índico", code: "IOT"},
+        {nombre: "Tierras Australes Francesas", code: "ATF"},
+        {nombre: "Timor Oriental", code: "TLS"},
+        {nombre: "Togo", code: "TGO"},
+        {nombre: "Tokelau", code: "TKL"},
+        {nombre: "Tonga", code: "TON"},
+        {nombre: "Trinidad y Tobago", code: "TTO"},
+        {nombre: "Túnez", code: "TUN"},
+        {nombre: "Turkmenistán", code: "TKM"},
+        {nombre: "Turquía", code: "TUR"},
+        {nombre: "Tuvalu", code: "TUV"},
+        {nombre: "Ucrania", code: "UKR"},
+        {nombre: "Uganda", code: "UGA"},
+        {nombre: "Uruguay", code: "URY"},
+        {nombre: "Uzbekistán", code: "UZB"},
+        {nombre: "Vanuatu", code: "VUT"},
+        {nombre: "Vaticano (Ciudad del)", code: "VAT"},
+        {nombre: "Venezuela", code: "VEN"},
+        {nombre: "Vietnam", code: "VNM"},
+        {nombre: "Wallis y Futuna", code: "WLF"},
+        {nombre: "Yemen", code: "YEM"},
+        {nombre: "Yibuti", code: "DJI"},
+        {nombre: "Zambia", code: "ZMB"},
+        {nombre: "Zimbabue", code: "ZWE"}
+    ];
+
+    function cargarPaises() {
+        let selectNac = document.getElementById('nacionalidad');
+        let selectRes = document.getElementById('paisResidencia');
+        
+        PAISES_MUNDO.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        PAISES_MUNDO.forEach(p => {
+            let opt1 = new Option(p.nombre, p.code);
+            let opt2 = new Option(p.nombre, p.code);
+            
+            if(p.code === 'ESP') { 
+                opt1.selected = true; 
+                opt2.selected = true; 
+            }
+            selectNac.add(opt1);
+            selectRes.add(opt2);
+        });
+    }
+
+    function controlarPaisResidencia() {
+        let pais = document.getElementById('paisResidencia').value;
+        let divMun = document.getElementById('divCodigoMun');
+        let divNom = document.getElementById('divNombreMun');
+        let inputMun = document.getElementById('codigoMunicipio');
+        let inputNom = document.getElementById('nombreMunicipio');
+
+        if (pais === 'ESP') {
+            divMun.style.display = 'block';
+            divNom.style.display = 'none';
+            inputMun.required = true;
+            inputNom.required = false;
+        } else {
+            divMun.style.display = 'none';
+            divNom.style.display = 'block';
+            inputMun.required = false;
+            inputNom.required = true;
+        }
+    }
+
+    function validarDNI(dni) {
+        let match = dni.match(/^(\d{8})([A-Z])$/);
+        if (!match) return false;
+        let letras = "TRWAGMYFPDXBNJZSQVHLCKE";
+        return letras[parseInt(match[1]) % 23] === match[2];
+    }
+
+    function validarNIE(nie) {
+        let match = nie.match(/^([XYZ])(\d{7})([A-Z])$/);
+        if (!match) return false;
+        let map = {'X': '0', 'Y': '1', 'Z': '2'};
+        let num = map[match[1]] + match[2];
+        let letras = "TRWAGMYFPDXBNJZSQVHLCKE";
+        return letras[parseInt(num) % 23] === match[3];
+    }
+
+    async function enviarDatos(event) {
+        event.preventDefault();
+        
+        let tipoDoc = document.getElementById('tipoDocumento').value;
+        let numDoc = document.getElementById('numeroDocumento').value.trim();
+        let cp = document.getElementById('codigoPostal').value.trim();
+        let paisRes = document.getElementById('paisResidencia').value;
+        let munEsp = document.getElementById('codigoMunicipio').value.trim();
+        
+        let errorDoc = document.getElementById('errorDoc');
+        let errorCP = document.getElementById('errorCP');
+        let errorMun = document.getElementById('errorMun');
+        let valido = true;
+
+        if (tipoDoc === 'NIF' && !validarDNI(numDoc)) {
+            errorDoc.style.display = 'block';
+            valido = false;
+        } else if (tipoDoc === 'NIE' && !validarNIE(numDoc)) {
+            errorDoc.style.display = 'block';
+            valido = false;
+        } else {
+            errorDoc.style.display = 'none';
+        }
+
+        if (paisRes === 'ESP' && !/^\d{5}$/.test(cp)) {
+            errorCP.style.display = 'block';
+            valido = false;
+        } else {
+            errorCP.style.display = 'none';
+        }
+
+        if (paisRes === 'ESP' && !/^\d{5}$/.test(munEsp)) {
+            errorMun.style.display = 'block';
+            valido = false;
+        } else {
+            errorMun.style.display = 'none';
+        }
+
+        if (!valido) {
+            alert("Existen errores o formato incorrecto en los campos marcados en rojo.");
+            return;
+        }
+
+        const btn = document.getElementById('btnEnviar');
+        btn.disabled = true;
+        btn.innerText = "Enviando datos...";
+
+        const datosHuesped = {
+            referencia: "RES-001",
+            fechaContrato: new Date().toISOString().split('T')[0] + "+02:00",
+            fechaEntrada: new Date().toISOString(),
+            fechaSalida: new Date().toISOString(),
+            numPersonas: 1,
+            numHabitaciones: 1,
+            internet: "true",
+            tipoPago: document.getElementById('tipoPago').value,
+            fechaPago: new Date().toISOString().split('T')[0] + "+02:00",
+            medioPago: "Online",
+            titular: document.getElementById('nombre').value + " " + document.getElementById('apellido1').value,
+            caducidadTarjeta: "12/2027",
+            rol: "VI",
+            nombre: document.getElementById('nombre').value,
+            apellido1: document.getElementById('apellido1').value,
+            apellido2: document.getElementById('apellido2').value,
+            tipoDocumento: tipoDoc,
+            numeroDocumento: numDoc,
+            soporteDocumento: document.getElementById('soporteDocumento').value,
+            fechaNacimiento: document.getElementById('fechaNacimiento').value + "+02:00",
+            nacionalidad: document.getElementById('nacionalidad').value,
+            sexo: document.getElementById('sexo').value,
+            direccion: document.getElementById('direccion').value,
+            direccionComplementaria: "",
+            codigoMunicipio: paisRes === 'ESP' ? munEsp : "00000",
+            nombreMunicipio: paisRes === 'ESP' ? "" : document.getElementById('nombreMunicipio').value,
+            codigoPostal: cp,
+            pais: paisRes,
+            telefono: document.getElementById('telefono').value,
+            telefono2: "",
+            correo: document.getElementById('correo').value,
+            parentesco: "OT"
+        };
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datosHuesped)
+            });
+
+            document.getElementById('formularioViajero').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+        } catch (error) {
+            alert("Hubo un error al enviar los datos. Por favor, inténtalo de nuevo.");
+            btn.disabled = false;
+            btn.innerText = "Enviar Datos de Registro";
+        }
+    }
+
+    window.onload = () => {
+        cargarPaises();
+    };
+</script>
+
+</body>
+</html>
